@@ -93,9 +93,10 @@ const updateManager = (store: DarkModeStore) => {
 /** Update changed dark mode settings and persist to localStorage  */
 export const store = (userTheme: Partial<DarkModeStore> = {}): DarkModeStore => {
   const storedItem = window.localStorage.getItem(STORAGE_KEY);
+  let stored: DarkModeStore | undefined;
 
   if (typeof storedItem === 'string') {
-    const stored: DarkModeStore = JSON.parse(storedItem);
+    stored = JSON.parse(storedItem) as DarkModeStore;
 
     if (userTheme) {
       if (userTheme.dark && !equal(stored.dark, userTheme.dark)) {
@@ -108,11 +109,17 @@ export const store = (userTheme: Partial<DarkModeStore> = {}): DarkModeStore => 
         updateStore(stored);
       }
     }
-
-    return stored;
   }
 
-  return { ...defaultParams, ...userTheme } as DarkModeStore;
+  const updatedStore = { ...defaultParams, ...userTheme, ...stored } as DarkModeStore
+
+  if (updatedStore.current) {
+    // this serves the dual purpose of updating the iframe body
+    // in standalone canvas tab mode
+    updateManager(updatedStore);
+  }
+
+  return updatedStore;
 };
 
 interface DarkModeProps {
@@ -133,6 +140,7 @@ export const DarkMode = ({ api }: DarkModeProps) => {
   const setMode = React.useCallback(
     (mode: Mode) => {
       const currentStore = store();
+      api.setQueryParams({ colorMode: mode })
       api.setOptions({ theme: currentStore[mode] });
       setDark(mode === 'dark');
       api.getChannel().emit(DARK_MODE_EVENT_NAME, mode === 'dark');
@@ -201,12 +209,16 @@ export const DarkMode = ({ api }: DarkModeProps) => {
       return;
     }
 
-    if (defaultMode) {
+    const qParam = api.getQueryParam('colorMode') as typeof modes[number] | undefined
+
+    if (qParam && qParam !== defaultMode && modes.includes(qParam)) {
+      updateMode(qParam);
+    } else if (defaultMode) {
       updateMode(defaultMode);
     } else if (prefersDark.matches) {
       updateMode('dark');
     }
-  }, [defaultMode, updateMode, initialMode]);
+  }, [defaultMode, updateMode, initialMode, api]);
 
   return (
     <IconButton

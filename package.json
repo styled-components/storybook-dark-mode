@@ -1,7 +1,7 @@
 {
-  "name": "storybook-dark-mode",
-  "version": "1.0.8",
-  "description": "Toggle between light and dark mode in Storybook",
+  "name": "@styled/storybook-dark-mode",
+  "version": "1.1.5",
+  "description": "Fork of storybook-dark-mode that fixes applying the appropriate classes when viewing a story in a new window iframe.",
   "main": "dist/index.js",
   "source": "index.ts",
   "files": [
@@ -19,11 +19,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/hipstersmoothie/storybook-dark-mode"
+    "url": "https://github.com/styled-components/storybook-dark-mode"
   },
   "scripts": {
     "lint": "eslint --ext .ts --ext .tsx src/**",
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "release": "auto shipit"
   },
   "peerDependencies": {
